@@ -26,7 +26,27 @@ Masalah ini penting untuk diselesaikan karena konsumen kini mengharapkan layanan
 
 ## Data Understanding
 
-Dataset ini merupakan data simulasi dari sistem kupon dalam kendaraan, terdiri dari berbagai informasi pengguna dan respons terhadap kupon.
+Dataset ini merupakan data simulasi dari sistem kupon dalam kendaraan, terdiri dari berbagai informasi pengguna dan respons terhadap kupon. Dataset awal memiliki 12.684 baris dan 26 kolom sebelum dilakukan preprocessing.
+
+### Kondisi Data Awal
+
+- Missing Values: Terdapat nilai NaN pada beberapa kolom, contohnya pada kolom CarryAway.
+
+- Data Duplikat: Setelah pengecekan, tidak ditemukan data duplikat pada dataset.
+
+- Outlier: Tidak dilakukan analisis eksplisit mengenai outlier karena mayoritas fitur bersifat kategorikal.
+
+### Sumber Dataset
+Dataset diambil dari GitHub dan dapat diakses melalui tautan berikut:  
+https://github.com/taqi1502/Proyek-Akhir-Machine-Learning/blob/main/dataset.csv
+
+### Deskripsi Fitur
+
+Beberapa fitur penting dalam dataset antara lain:
+- `Bar`, `CoffeeHouse`, `CarryAway`, `RestaurantLessThan20`, `Restaurant20To50`: Frekuensi kunjungan ke tempat tersebut dalam sebulan terakhir.
+- `toCoupon_GEQ5min`: Estimasi waktu menuju lokasi penggunaan kupon.
+- `direction_same`: Apakah arah tujuan pengguna sama dengan arah ke lokasi kupon.
+- `Y`: Label target, menunjukkan apakah pengguna akan menggunakan kupon (yes/no).
 
 ### Variabel-variabel dalam dataset:
 - `gender`: Jenis kelamin pengguna
@@ -52,6 +72,20 @@ Dataset ini merupakan data simulasi dari sistem kupon dalam kendaraan, terdiri d
 
 Tujuan data preparation ini adalah untuk mempersiapkan data agar dapat diproses dengan optimal oleh algoritma clustering.
 
+a. Untuk Content-Based Filtering (CBF):
+Beberapa fitur teks (seperti occupation, age, income, maritalStatus, dll) digabungkan menjadi satu fitur baru bernama user_profile.
+
+Dilakukan TF-IDF Vectorization pada kolom user_profile untuk menghasilkan representasi numerik.
+
+Data kupon direpresentasikan menggunakan kolom coupon.
+
+b. Untuk Collaborative Filtering (CF):
+Label pada kolom coupon diubah menjadi numerik menggunakan Label Encoding, menjadi coupon_id.
+
+Dibuat pivot table untuk menghasilkan matrix interaksi user-item, dengan baris sebagai user_profile dan kolom coupon_id.
+
+Diterapkan TruncatedSVD untuk dekomposisi dimensi rendah matriks interaksi.
+
 ## Modeling
 
 - Algoritma utama yang digunakan adalah **K-Means Clustering**.
@@ -63,6 +97,23 @@ Tujuan data preparation ini adalah untuk mempersiapkan data agar dapat diproses 
 - Visualisasi hasil clustering menunjukkan adanya pengelompokan pengguna yang cukup jelas setelah reduksi PCA.
 - Komposisi setiap cluster dianalisis berdasarkan fitur dominan.
 
+a. Content-Based Filtering (CBF)
+Menggunakan cosine similarity antara user profile dan kupon.
+
+Top-N rekomendasi dihasilkan dengan memilih kupon yang paling mirip berdasarkan skor kemiripan.
+
+Contoh Output Top-N untuk CBF:
+User: Executive_30-39_high income
+Top-5 Kupon: ['Coffee House', 'Bar', 'Restaurant(<20)', 'Carry out & Take away', 'Restaurant(20-50)']
+
+b. Collaborative Filtering (CF)
+Matriks interaksi direduksi menggunakan TruncatedSVD, lalu dikalikan kembali untuk mendapatkan prediksi skor antar user dan kupon.
+
+Contoh Output Top-N untuk CF:
+User ID: 0
+Top-5 Kupon berdasarkan skor prediksi: ['Bar', 'Coffee House', 'Restaurant(20-50)', 'Carry out & Take away', 'Restaurant(<20)']
+
+
 ## Evaluation
 
 ### Metrik Evaluasi: **Silhouette Score**
@@ -71,5 +122,13 @@ Tujuan data preparation ini adalah untuk mempersiapkan data agar dapat diproses 
 - Pada eksperimen ini, didapatkan Silhouette Score sebesar **~0.23**, yang mengindikasikan bahwa hasil clustering cukup baik meskipun masih dapat ditingkatkan.
 - Hasil evaluasi menunjukkan bahwa pengguna dalam setiap cluster memiliki karakteristik yang berbeda dan dapat digunakan untuk rekomendasi kupon yang lebih relevan.
 
----
+a. Evaluasi Content-Based Filtering:
+Precision@5: Digunakan untuk mengukur ketepatan 5 rekomendasi teratas.
+
+Hasil Precision@5: 1.00, yang menunjukkan seluruh rekomendasi relevan untuk pengguna tersebut.
+
+b. Evaluasi Collaborative Filtering:
+Root Mean Square Error (RMSE): Digunakan untuk mengukur error antara prediksi skor dan skor aktual.
+
+Hasil RMSE: 0.0000, menunjukkan model mampu merekonstruksi interaksi pengguna-kupon dengan sangat baik.
 
