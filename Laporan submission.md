@@ -37,38 +37,46 @@ Dataset ini merupakan data simulasi dari sistem kupon dalam kendaraan, terdiri d
 - Outlier: Tidak dilakukan analisis eksplisit mengenai outlier karena mayoritas fitur bersifat kategorikal.
 
 ### Sumber Dataset
-Dataset diambil dari GitHub dan dapat diakses melalui tautan berikut:  
-https://github.com/taqi1502/Proyek-Akhir-Machine-Learning/blob/main/dataset.csv
+Tautan sumber data yang digunakan dalam proyek ini adalah
+https://raw.githubusercontent.com/Zkeera/Proyek-Akhir-Machine-Learning/refs/heads/main/Dataset/in-vehicle-coupon-recommendation.csv
+dan diakses langsung melalui URL raw GitHub. Tautan yang digunakan dalam notebook ini sesuai dengan dataset yang dimuat ke dalam DataFrame df.
 
 ### Deskripsi Fitur
 
-Beberapa fitur penting dalam dataset antara lain:
-- `Bar`, `CoffeeHouse`, `CarryAway`, `RestaurantLessThan20`, `Restaurant20To50`: Frekuensi kunjungan ke tempat tersebut dalam sebulan terakhir.
-- `toCoupon_GEQ5min`: Estimasi waktu menuju lokasi penggunaan kupon.
-- `direction_same`: Apakah arah tujuan pengguna sama dengan arah ke lokasi kupon.
-- `Y`: Label target, menunjukkan apakah pengguna akan menggunakan kupon (yes/no).
+Berikut adalah deskripsi fitur yang digunakan dalam dataset:
 
-### Variabel-variabel dalam dataset:
-- `gender`: Jenis kelamin pengguna
-- `age`: Umur pengguna
-- `car_owner`: Kepemilikan kendaraan
-- `income`: Pendapatan pengguna
-- `marital_status`: Status pernikahan
-- `children`: Jumlah anak
-- `education`: Tingkat pendidikan
-- `occupation`: Jenis pekerjaan
-- `coupon`: Jenis kupon yang diberikan
-- `expiration`: Durasi masa berlaku kupon
-- `coffeehouse`, `bar`, `carryaway`, dst: Frekuensi kunjungan ke tempat-tempat tersebut
-- `destination`: Tujuan perjalanan
-- `passanger`: Penumpang yang ikut dalam perjalanan
-- `weather`, `temperature`, `time`, `weekday`: Kondisi saat perjalanan
+- destination: Tujuan perjalanan pengguna.
+
+- passanger: Jumlah penumpang dalam kendaraan.
+
+- weather: Kondisi cuaca saat perjalanan.
+
+- coupon: Jenis kupon yang ditawarkan.
+
+- gender: Jenis kelamin pengguna.
+
+- age: Rentang usia pengguna.
+
+- maritalStatus: Status pernikahan pengguna.
+
+- has_children: Indikator apakah pengguna memiliki anak.
+
+- education: Tingkat pendidikan pengguna.
+
+- occupation: Pekerjaan pengguna.
+
+- user_profile: Fitur gabungan yang menggambarkan konteks pengguna
+
+berdasarkan beberapa atribut di atas (contoh: tujuan, cuaca, jenis kelamin, usia, status pernikahan, dll.).
+
 
 ## Data Preparation
 
-- **Encoding variabel kategorik** menggunakan One-Hot Encoding karena sebagian besar fitur bersifat kategorikal.
-- **Normalisasi fitur numerik** menggunakan StandardScaler untuk memastikan bahwa setiap fitur memiliki skala yang sebanding sebelum dilakukan clustering.
-- **Menggabungkan** fitur yang telah diencoding dan dinormalisasi menjadi satu matriks fitur.
+Pada bagian ini, kami menggunakan teknik Label Encoding untuk mengonversi fitur coupon menjadi format numerik. Fitur lainnya, seperti user_profile, dihasilkan dengan menggabungkan informasi dari beberapa kolom yang relevan menjadi satu string untuk setiap pengguna.
+
+Label Encoding: Fitur coupon dikodekan menjadi nilai numerik menggunakan LabelEncoder.
+
+User Profile: Profil pengguna digabungkan dari beberapa kolom (misalnya, tujuan perjalanan, cuaca, usia, dll.) menjadi satu string yang mewakili konteks pengguna secara keseluruhan.
 
 Tujuan data preparation ini adalah untuk mempersiapkan data agar dapat diproses dengan optimal oleh algoritma clustering.
 
@@ -82,16 +90,43 @@ Data kupon direpresentasikan menggunakan kolom coupon.
 b. Untuk Collaborative Filtering (CF):
 Label pada kolom coupon diubah menjadi numerik menggunakan Label Encoding, menjadi coupon_id.
 
-Dibuat pivot table untuk menghasilkan matrix interaksi user-item, dengan baris sebagai user_profile dan kolom coupon_id.
+Matriks interaksi dibuat menggunakan user_id sebagai indeks dan coupon_id sebagai kolom dalam pivot table, dengan nilai yang menunjukkan apakah pengguna menerima kupon tersebut (Y). Matriks interaksi ini kemudian digunakan untuk modeling Collaborative Filtering.
+
+Pivot Table: df.pivot_table(index='user_id', columns='coupon_id', values='Y', fill_value=0)
 
 Diterapkan TruncatedSVD untuk dekomposisi dimensi rendah matriks interaksi.
 
 ## Modeling
 
-- Algoritma utama yang digunakan adalah **K-Means Clustering**.
-- Dilakukan pencarian jumlah cluster optimal menggunakan **Metode Elbow** dan evaluasi dengan **Silhouette Score**.
-- Setelah ditentukan jumlah cluster yang optimal (misalnya k=4), dilakukan pemodelan ulang dan analisis komposisi tiap cluster.
-- Untuk visualisasi, dilakukan reduksi dimensi menggunakan **PCA** ke dalam 2 dimensi.
+a. Content-Based Filtering (CBF):
+
+Untuk rekomendasi berbasis konten (CBF), kami menghitung kemiripan antara profil pengguna dan kupon yang ada menggunakan cosine similarity. Representasi numerik untuk user_profile dibuat dengan TF-IDF Vectorization. Hasil rekomendasi dihitung untuk pengguna pertama (user_index = 0), dan kupon yang direkomendasikan adalah yang memiliki kemiripan tertinggi dengan profil pengguna tersebut.
+
+Output untuk CBF menunjukkan kupon yang paling mirip berdasarkan profil pengguna.
+
+Cosine Similarity dihitung menggunakan kode berikut:
+
+tfidf = TfidfVectorizer()
+tfidf_matrix = tfidf.fit_transform(df['user_profile'])
+cos_sim = cosine_similarity(tfidf_matrix[user_index], tfidf_matrix)
+similar_indices = cos_sim.argsort()[0][-6:-1][::-1]
+df.iloc[similar_indices][['coupon', 'destination', 'Y']]
+
+b. Collaborative Filtering (CF):
+
+Untuk Collaborative Filtering, kami menggunakan teknik TruncatedSVD (Singular Value Decomposition) untuk pemfaktoran matriks interaksi pengguna-kupon. Setelah matriks interaksi dibentuk, kami melakukan dekomposisi untuk mengurangi dimensi dan memprediksi interaksi yang belum tercatat.
+
+Matriks prediksi dihasilkan dengan mengalikan matriks laten yang dihasilkan oleh SVD dengan komponen yang diperoleh dari dekomposisi.
+
+Evaluasi untuk Collaborative Filtering dilakukan dengan menghitung RMSE (Root Mean Square Error).
+
+SVD dilakukan dengan kode berikut:
+
+svd = TruncatedSVD(n_components=5, random_state=42)
+latent_matrix = svd.fit_transform(interaction_array)
+predicted_matrix = np.dot(latent_matrix, svd.components_)
+rmse = mean_squared_error(true_values, predicted_values) ** 0.5
+print(f"RMSE Collaborative Filtering (TruncatedSVD): {rmse:.4f}")
 
 ### Hasil Visualisasi:
 - Visualisasi hasil clustering menunjukkan adanya pengelompokan pengguna yang cukup jelas setelah reduksi PCA.
@@ -113,6 +148,11 @@ Contoh Output Top-N untuk CF:
 User ID: 0
 Top-5 Kupon berdasarkan skor prediksi: ['Bar', 'Coffee House', 'Restaurant(20-50)', 'Carry out & Take away', 'Restaurant(<20)']
 
+Sebuah heatmap digunakan untuk memvisualisasikan matriks interaksi antara pengguna dan kupon. Visualisasi ini memberikan gambaran mengenai bagaimana interaksi pengguna dengan kupon yang ditawarkan.
+
+sns.heatmap(interaction_matrix, cmap="YlGnBu", cbar=True)
+plt.title("User-Coupon Interaction Matrix")
+plt.show()
 
 ## Evaluation
 
