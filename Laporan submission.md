@@ -67,23 +67,46 @@ Berikut adalah deskripsi fitur yang digunakan dalam dataset:
 
 - user_profile: Fitur gabungan yang menggambarkan konteks pengguna
 
-berdasarkan beberapa atribut di atas (contoh: tujuan, cuaca, jenis kelamin, usia, status pernikahan, dll.).
+- temperature: Suhu yang tercatat pada waktu tertentu yang dapat mempengaruhi keputusan atau preferensi pengguna terhadap penawaran kupon.
 
+- time: Waktu saat pengguna melakukan transaksi atau interaksi dengan sistem, yang penting untuk memahami kebiasaan atau pola pengguna.
+
+- expiration: Tanggal kadaluarsa kupon, yang menentukan relevansi kupon tersebut bagi pengguna.
+
+- RestaurantLessThan20, Restaurant20To50: Kategori harga untuk restoran, menentukan jenis penawaran berdasarkan harga rata-rata makanan.
+
+- CoffeeHouse: Menunjukkan apakah pengguna lebih sering mengunjungi kedai kopi, yang dapat mempengaruhi jenis kupon yang disarankan.
+
+- CarryAway: Menunjukkan apakah pengguna cenderung membeli untuk dibawa pulang, yang dapat mengindikasikan preferensi tertentu.
+
+- toCoupon_GEQ5min: Waktu yang dibutuhkan pengguna untuk mendapatkan kupon, yang bisa menjadi faktor dalam keputusan pembelian.
+
+- direction_same: Menunjukkan arah perjalanan pengguna, yang dapat berhubungan dengan penawaran lokasi spesifik.
+
+- Y: Target label yang menunjukkan apakah kupon diterima atau tidak, yang sangat penting untuk membangun model klasifikasi.
 
 ## Data Preparation
 
-Pada bagian ini, kami menggunakan teknik Label Encoding untuk mengonversi fitur coupon menjadi format numerik. Fitur lainnya, seperti user_profile, dihasilkan dengan menggabungkan informasi dari beberapa kolom yang relevan menjadi satu string untuk setiap pengguna.
+Tahapan persiapan data yang dilakukan meliputi langkah-langkah berikut:
 
-Label Encoding: Fitur coupon dikodekan menjadi nilai numerik menggunakan LabelEncoder.
+Pembuatan User Profile:
 
-User Profile: Profil pengguna digabungkan dari beberapa kolom (misalnya, tujuan perjalanan, cuaca, usia, dll.) menjadi satu string yang mewakili konteks pengguna secara keseluruhan.
+Membuat profil pengguna berdasarkan informasi yang tersedia dalam dataset, seperti gender, age, maritalStatus, haschildren, dan occupation.
+
+Label Encoding:
+
+Menggunakan Label Encoding untuk mengubah fitur coupon menjadi coupon_id, yang memungkinkan pemrosesan kupon secara numerik.
+
+TruncatedSVD:
+
+TruncatedSVD digunakan untuk dekomposisi matriks dalam Collaborative Filtering berbasis faktorisasi matriks. Ini lebih cocok dijelaskan di bagian Modeling.
+
+Setelah langkah-langkah persiapan data ini selesai, dataset sudah siap untuk diproses menggunakan model rekomendasi.
 
 Tujuan data preparation ini adalah untuk mempersiapkan data agar dapat diproses dengan optimal oleh algoritma clustering.
 
 a. Untuk Content-Based Filtering (CBF):
 Beberapa fitur teks (seperti occupation, age, income, maritalStatus, dll) digabungkan menjadi satu fitur baru bernama user_profile.
-
-Dilakukan TF-IDF Vectorization pada kolom user_profile untuk menghasilkan representasi numerik.
 
 Data kupon direpresentasikan menggunakan kolom coupon.
 
@@ -100,6 +123,11 @@ Diterapkan TruncatedSVD untuk dekomposisi dimensi rendah matriks interaksi.
 
 a. Content-Based Filtering (CBF):
 
+TF-IDF untuk Content-Based Filtering
+Pada tahap ini, kami menggunakan TF-IDF (Term Frequency-Inverse Document Frequency) untuk ekstraksi fitur dari data kupon, yang digunakan dalam Content-Based Filtering. Teknik ini digunakan untuk menghitung relevansi kupon terhadap preferensi pengguna.
+
+TF-IDF digunakan untuk mengukur pentingnya setiap kata atau fitur dalam deskripsi kupon, yang kemudian diterjemahkan menjadi vektor fitur yang dapat digunakan dalam algoritma rekomendasi berbasis konten.
+
 Untuk rekomendasi berbasis konten (CBF), kami menghitung kemiripan antara profil pengguna dan kupon yang ada menggunakan cosine similarity. Representasi numerik untuk user_profile dibuat dengan TF-IDF Vectorization. Hasil rekomendasi dihitung untuk pengguna pertama (user_index = 0), dan kupon yang direkomendasikan adalah yang memiliki kemiripan tertinggi dengan profil pengguna tersebut.
 
 Output untuk CBF menunjukkan kupon yang paling mirip berdasarkan profil pengguna.
@@ -114,7 +142,7 @@ df.iloc[similar_indices][['coupon', 'destination', 'Y']]
 
 b. Collaborative Filtering (CF):
 
-Untuk Collaborative Filtering, kami menggunakan teknik TruncatedSVD (Singular Value Decomposition) untuk pemfaktoran matriks interaksi pengguna-kupon. Setelah matriks interaksi dibentuk, kami melakukan dekomposisi untuk mengurangi dimensi dan memprediksi interaksi yang belum tercatat.
+Menerapkan Collaborative Filtering menggunakan TruncatedSVD untuk menemukan kesamaan antara pengguna dan memberikan rekomendasi berdasarkan pola preferensi serupa. Hasil dari Collaborative Filtering digunakan untuk memprediksi kupon yang mungkin disukai pengguna berdasarkan riwayat preferensi pengguna lain yang serupa.
 
 Matriks prediksi dihasilkan dengan mengalikan matriks laten yang dihasilkan oleh SVD dengan komponen yang diperoleh dari dekomposisi.
 
