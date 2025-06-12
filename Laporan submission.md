@@ -81,13 +81,28 @@ Berikut adalah deskripsi fitur yang digunakan dalam dataset:
 
 - toCoupon_GEQ5min: Waktu yang dibutuhkan pengguna untuk mendapatkan kupon, yang bisa menjadi faktor dalam keputusan pembelian.
 
+- toCoupon_GEQ25min: Menunjukkan apakah waktu perjalanan ke tempat kupon lebih dari 25 menit.
+
 - direction_same: Menunjukkan arah perjalanan pengguna, yang dapat berhubungan dengan penawaran lokasi spesifik.
 
 - Y: Target label yang menunjukkan apakah kupon diterima atau tidak, yang sangat penting untuk membangun model klasifikasi.
 
+- Bar: Menunjukkan jenis bar tempat pengguna biasanya mengunjungi.
+
+- direction_opp: Mengindikasikan apakah pengguna bergerak ke arah yang berlawanan dari lokasi kupon yang ditawarkan.
+
 ## Data Preparation
 
+TF-IDF untuk Content-Based Filtering
+Pada tahap ini, kami menggunakan TF-IDF (Term Frequency-Inverse Document Frequency) untuk ekstraksi fitur dari data kupon, yang digunakan dalam Content-Based Filtering. Teknik ini digunakan untuk menghitung relevansi kupon terhadap preferensi pengguna.
+
+TF-IDF digunakan untuk mengukur pentingnya setiap kata atau fitur dalam deskripsi kupon, yang kemudian diterjemahkan menjadi vektor fitur yang dapat digunakan dalam algoritma rekomendasi berbasis konten.
+
 Tahapan persiapan data yang dilakukan meliputi langkah-langkah berikut:
+
+Pembuatan Kolom user_id:
+
+Kolom user_id dibuat dengan kode df['user_id'] = df.index, yang memetakan setiap pengguna ke ID yang unik. Langkah ini penting untuk Collaborative Filtering dan perlu dicantumkan dengan jelas di bagian Data Preparation, agar alur persiapan data lebih terstruktur.
 
 Pembuatan User Profile:
 
@@ -122,11 +137,6 @@ Diterapkan TruncatedSVD untuk dekomposisi dimensi rendah matriks interaksi.
 ## Modeling
 
 a. Content-Based Filtering (CBF):
-
-TF-IDF untuk Content-Based Filtering
-Pada tahap ini, kami menggunakan TF-IDF (Term Frequency-Inverse Document Frequency) untuk ekstraksi fitur dari data kupon, yang digunakan dalam Content-Based Filtering. Teknik ini digunakan untuk menghitung relevansi kupon terhadap preferensi pengguna.
-
-TF-IDF digunakan untuk mengukur pentingnya setiap kata atau fitur dalam deskripsi kupon, yang kemudian diterjemahkan menjadi vektor fitur yang dapat digunakan dalam algoritma rekomendasi berbasis konten.
 
 Untuk rekomendasi berbasis konten (CBF), kami menghitung kemiripan antara profil pengguna dan kupon yang ada menggunakan cosine similarity. Representasi numerik untuk user_profile dibuat dengan TF-IDF Vectorization. Hasil rekomendasi dihitung untuk pengguna pertama (user_index = 0), dan kupon yang direkomendasikan adalah yang memiliki kemiripan tertinggi dengan profil pengguna tersebut.
 
@@ -169,12 +179,31 @@ Contoh Output Top-N untuk CBF:
 User: Executive_30-39_high income
 Top-5 Kupon: ['Coffee House', 'Bar', 'Restaurant(<20)', 'Carry out & Take away', 'Restaurant(20-50)']
 
+| No | Coupon          | Destination     |
+| -- | --------------- | --------------- |
+| 1  | Restaurant(<20) | No Urgent Place |
+| 2  | Restaurant(<20) | No Urgent Place |
+| 3  | Restaurant(<20) | No Urgent Place |
+| 4  | Restaurant(<20) | No Urgent Place |
+| 5  | Restaurant(<20) | No Urgent Place |
+
+Output ini menunjukkan rekomendasi kupon untuk User 5 berdasarkan Content-Based Filtering (CBF), yang menghasilkan Restaurant(<20) sebagai rekomendasi utama dengan tujuan No Urgent Place.
+
 b. Collaborative Filtering (CF)
 Matriks interaksi direduksi menggunakan TruncatedSVD, lalu dikalikan kembali untuk mendapatkan prediksi skor antar user dan kupon.
 
 Contoh Output Top-N untuk CF:
 User ID: 0
 Top-5 Kupon berdasarkan skor prediksi: ['Bar', 'Coffee House', 'Restaurant(20-50)', 'Carry out & Take away', 'Restaurant(<20)']
+
+| No | Coupon ID | Predicted Score |
+| -- | --------- | --------------- |
+| 1  | 4         | 0.0             |
+| 2  | 0         | 0.0             |
+| 3  | 2         | -8.33e-17       |
+| 4  | 1         | -2.02e-16       |
+
+Output ini menunjukkan rekomendasi kupon untuk User 5 berdasarkan Collaborative Filtering (CF), dengan ID kupon dan skor prediksi yang relevan.
 
 Sebuah heatmap digunakan untuk memvisualisasikan matriks interaksi antara pengguna dan kupon. Visualisasi ini memberikan gambaran mengenai bagaimana interaksi pengguna dengan kupon yang ditawarkan.
 
