@@ -93,6 +93,10 @@ Berikut adalah deskripsi fitur yang digunakan dalam dataset:
 
 - direction_opp: Mengindikasikan apakah pengguna bergerak ke arah yang berlawanan dari lokasi kupon yang ditawarkan.
 
+- Income: Mewakili kelompok pendapatan pengguna, yang membantu dalam memahami daya beli mereka dan penawaran kupon yang relevan.
+
+- Car: Menunjukkan apakah pengguna memiliki mobil. Fitur ini dapat berguna untuk memfilter penawaran yang terkait dengan layanan atau promosi kendaraan.
+
 ## Data Preparation
 
 Pembuatan User Profile:
@@ -140,7 +144,7 @@ Diterapkan TruncatedSVD untuk dekomposisi dimensi rendah matriks interaksi.
 
 a. Content-Based Filtering (CBF):
 
-Untuk rekomendasi berbasis konten (CBF), kami menghitung kemiripan antara profil pengguna dan kupon yang ada menggunakan cosine similarity. Representasi numerik untuk user_profile dibuat dengan TF-IDF Vectorization. Hasil rekomendasi dihitung untuk pengguna pertama (user_index = 0), dan kupon yang direkomendasikan adalah yang memiliki kemiripan tertinggi dengan profil pengguna tersebut.
+Pada bagian ini, kami menggunakan metode Content-Based Filtering (CBF) untuk memberikan rekomendasi berdasarkan kemiripan antara profil pengguna dan kupon yang ada. Profil pengguna dibuat dengan menggabungkan beberapa fitur yang relevan, seperti gender, age, maritalStatus, occupation, dan lainnya. Fitur ini kemudian diproses menggunakan TF-IDF (Term Frequency-Inverse Document Frequency) untuk mengukur relevansi kupon dengan preferensi pengguna.
 
 Output untuk CBF menunjukkan kupon yang paling mirip berdasarkan profil pengguna.
 
@@ -156,7 +160,7 @@ df.iloc[similar_indices][['coupon', 'destination', 'Y']]
 
 b. Collaborative Filtering (CF):
 
-Menerapkan Collaborative Filtering menggunakan TruncatedSVD untuk menemukan kesamaan antara pengguna dan memberikan rekomendasi berdasarkan pola preferensi serupa. Hasil dari Collaborative Filtering digunakan untuk memprediksi kupon yang mungkin disukai pengguna berdasarkan riwayat preferensi pengguna lain yang serupa.
+Untuk Collaborative Filtering, kami menggunakan teknik TruncatedSVD untuk memfaktorisasi matriks interaksi pengguna dan kupon. Matriks interaksi ini dibentuk dengan menggunakan user_id sebagai indeks dan coupon_id sebagai kolom, dengan nilai yang menunjukkan apakah pengguna menerima kupon tersebut.
 
 Matriks prediksi dihasilkan dengan mengalikan matriks laten yang dihasilkan oleh SVD dengan komponen yang diperoleh dari dekomposisi.
 
@@ -199,7 +203,7 @@ b. Collaborative Filtering (CF)
 Matriks interaksi direduksi menggunakan TruncatedSVD, lalu dikalikan kembali untuk mendapatkan prediksi skor antar user dan kupon.
 
 Contoh Output Top-N untuk CF:
-User ID: 0
+User ID: 5
 Top-5 Kupon berdasarkan skor prediksi: ['Bar', 'Coffee House', 'Restaurant(20-50)', 'Carry out & Take away', 'Restaurant(<20)']
 
 | No | Coupon ID | Predicted Score |
@@ -221,19 +225,36 @@ plt.show()
 
 ## Evaluation
 
-### Metrik Evaluasi: **Silhouette Score**
-
-- **Silhouette Score** digunakan untuk menilai kualitas hasil clustering. Nilai berkisar antara -1 hingga 1, dengan nilai lebih tinggi menunjukkan pengelompokan yang lebih baik.
-- Pada eksperimen ini, didapatkan Silhouette Score sebesar **~0.23**, yang mengindikasikan bahwa hasil clustering cukup baik meskipun masih dapat ditingkatkan.
-- Hasil evaluasi menunjukkan bahwa pengguna dalam setiap cluster memiliki karakteristik yang berbeda dan dapat digunakan untuk rekomendasi kupon yang lebih relevan.
+### Metrik Evaluasi:
 
 a. Evaluasi Content-Based Filtering:
-Precision@5: Digunakan untuk mengukur ketepatan 5 rekomendasi teratas.
+Untuk mengevaluasi kinerja model Content-Based Filtering, kami menggunakan Precision@5, yang mengukur seberapa akurat 5 rekomendasi teratas yang diberikan kepada pengguna. Metrik ini mengukur tingkat relevansi dari rekomendasi berdasarkan skor kemiripan antara profil pengguna dan kupon.
 
-Hasil Precision@5: 1.00, yang menunjukkan seluruh rekomendasi relevan untuk pengguna tersebut.
+Hasil Precision@5 menunjukkan bahwa seluruh rekomendasi yang diberikan untuk pengguna pertama (user_index = 0) sangat relevan dengan preferensinya, yang menghasilkan nilai Precision@5 = 1.00.
+
+| No | Coupon          | Destination     |
+| -- | --------------- | --------------- |
+| 1  | Restaurant(<20) | No Urgent Place |
+| 2  | Restaurant(<20) | No Urgent Place |
+| 3  | Restaurant(<20) | No Urgent Place |
+| 4  | Restaurant(<20) | No Urgent Place |
+| 5  | Restaurant(<20) | No Urgent Place |
+
+Dengan hasil ini, kita dapat menyimpulkan bahwa Content-Based Filtering memberikan rekomendasi yang sangat tepat bagi pengguna berdasarkan profil mereka.
 
 b. Evaluasi Collaborative Filtering:
-Root Mean Square Error (RMSE): Digunakan untuk mengukur error antara prediksi skor dan skor aktual.
+Untuk model Collaborative Filtering, kami menggunakan Root Mean Square Error (RMSE) untuk mengukur seberapa akurat sistem dalam memprediksi interaksi antara pengguna dan kupon. RMSE adalah metrik yang mengukur perbedaan antara nilai yang diprediksi oleh model dengan nilai aktual yang terjadi, dan semakin rendah nilai RMSE, semakin baik prediksi model tersebut.
 
-Hasil RMSE: 0.0000, menunjukkan model mampu merekonstruksi interaksi pengguna-kupon dengan sangat baik.
+Hasil RMSE untuk Collaborative Filtering adalah 0.0000, yang menunjukkan bahwa model sangat baik dalam merekonstruksi interaksi pengguna dengan kupon yang ditawarkan.
 
+Contoh Output untuk Collaborative Filtering:
+
+Top-N Rekomendasi untuk User ID: 5:
+| No | Coupon ID | Predicted Score |
+| -- | --------- | --------------- |
+| 1  | 4         | 0.0             |
+| 2  | 0         | 0.0             |
+| 3  | 2         | -8.33e-17       |
+| 4  | 1         | -2.02e-16       |
+
+Dengan hasil RMSE yang sangat rendah, ini menunjukkan bahwa Collaborative Filtering mampu memberikan prediksi yang sangat baik terkait preferensi pengguna berdasarkan interaksi mereka dengan kupon yang tersedia.
