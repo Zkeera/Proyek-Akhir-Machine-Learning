@@ -10,19 +10,19 @@ Masalah ini penting untuk diselesaikan karena konsumen kini mengharapkan layanan
 
 ### Problem Statements
 
-- Bagaimana cara mengelompokkan pengguna berdasarkan kebiasaan dan karakteristik mereka agar sistem rekomendasi lebih tepat sasaran?
-- Bagaimana memanfaatkan data kupon dan karakteristik pengguna untuk meningkatkan akurasi rekomendasi?
+- Bagaimana membangun sistem rekomendasi kupon yang relevan berdasarkan profil pengguna dan interaksi mereka dengan kupon?
+- Apa faktor-faktor yang mempengaruhi rekomendasi yang lebih tepat untuk pengguna berdasarkan data interaksi mereka dengan kupon?
 
 ### Goals
 
-- Mengidentifikasi segmen pelanggan yang berbeda dengan teknik clustering.
+- Mengidentifikasi rekomendasi kupon yang relevan melalui teknik Content-Based Filtering dan Collaborative Filtering.
 - Membuat sistem rekomendasi kupon yang relevan dan personal.
 
 ### Solution Statements
 
-- Menggunakan algoritma **K-Means Clustering** untuk mengelompokkan data pelanggan.
-- Melakukan eksplorasi data dengan **PCA** (Principal Component Analysis) untuk memvisualisasikan cluster.
-- Melakukan evaluasi kualitas cluster menggunakan **Silhouette Score**.
+- Membangun sistem rekomendasi kupon berbasis Content-Based Filtering dan Collaborative Filtering.
+
+- Menggunakan algoritma rekomendasi untuk memberikan kupon yang lebih personal dan tepat sasaran berdasarkan preferensi pengguna dan interaksi mereka dengan kupon.
 
 ## Data Understanding
 
@@ -156,6 +156,17 @@ cos_sim = cosine_similarity(tfidf_matrix[user_index], tfidf_matrix)
 similar_indices = cos_sim.argsort()[0][-6:-1][::-1]
 df.iloc[similar_indices][['coupon', 'destination', 'Y']]
 ```
+Output Top-N untuk CBF:
+User: Executive_30-39_high income
+Top-5 Kupon: ['Coffee House', 'Bar', 'Restaurant(<20)', 'Carry out & Take away', 'Restaurant(20-50)']
+
+| No | Coupon          | Destination     |
+| -- | --------------- | --------------- |
+| 1  | Restaurant(<20) | No Urgent Place |
+| 2  | Restaurant(<20) | No Urgent Place |
+| 3  | Restaurant(<20) | No Urgent Place |
+| 4  | Restaurant(<20) | No Urgent Place |
+| 5  | Restaurant(<20) | No Urgent Place |
 
 b. Collaborative Filtering (CF):
 
@@ -174,41 +185,7 @@ predicted_matrix = np.dot(latent_matrix, svd.components_)
 rmse = mean_squared_error(true_values, predicted_values) ** 0.5
 print(f"RMSE Collaborative Filtering (TruncatedSVD): {rmse:.4f}")
 ```
-
-## Evaluation
-
-### Metrik Evaluasi:
-
-a. Evaluasi Content-Based Filtering:
-Untuk mengevaluasi kinerja model Content-Based Filtering, kami menggunakan Precision@5, yang mengukur seberapa akurat 5 rekomendasi teratas yang diberikan kepada pengguna. Metrik ini mengukur tingkat relevansi dari rekomendasi berdasarkan skor kemiripan antara profil pengguna dan kupon.
-Menggunakan cosine similarity antara user profile dan kupon.
-
-Top-N rekomendasi dihasilkan dengan memilih kupon yang paling mirip berdasarkan skor kemiripan.
-
-Contoh Output Top-N untuk CBF:
-User: Executive_30-39_high income
-Top-5 Kupon: ['Coffee House', 'Bar', 'Restaurant(<20)', 'Carry out & Take away', 'Restaurant(20-50)']
-
-Hasil Precision@5 menunjukkan bahwa seluruh rekomendasi yang diberikan untuk pengguna pertama (user_index = 0) sangat relevan dengan preferensinya, yang menghasilkan nilai Precision@5 = 1.00.
-
-| No | Coupon          | Destination     |
-| -- | --------------- | --------------- |
-| 1  | Restaurant(<20) | No Urgent Place |
-| 2  | Restaurant(<20) | No Urgent Place |
-| 3  | Restaurant(<20) | No Urgent Place |
-| 4  | Restaurant(<20) | No Urgent Place |
-| 5  | Restaurant(<20) | No Urgent Place |
-
-Dengan hasil ini, kita dapat menyimpulkan bahwa Content-Based Filtering memberikan rekomendasi yang sangat tepat bagi pengguna berdasarkan profil mereka.
-
-b. Evaluasi Collaborative Filtering:
-
-Matriks interaksi direduksi menggunakan TruncatedSVD, lalu dikalikan kembali untuk mendapatkan prediksi skor antar user dan kupon.
-Untuk model Collaborative Filtering, kami menggunakan Root Mean Square Error (RMSE) untuk mengukur seberapa akurat sistem dalam memprediksi interaksi antara pengguna dan kupon. RMSE adalah metrik yang mengukur perbedaan antara nilai yang diprediksi oleh model dengan nilai aktual yang terjadi, dan semakin rendah nilai RMSE, semakin baik prediksi model tersebut.
-
-Hasil RMSE untuk Collaborative Filtering adalah 0.0000, yang menunjukkan bahwa model sangat baik dalam merekonstruksi interaksi pengguna dengan kupon yang ditawarkan.
-
-Contoh Output Top-N untuk CF:
+Output Top-N untuk CF:
 User ID: 5
 Top-5 Kupon berdasarkan skor prediksi: ['Bar', 'Coffee House', 'Restaurant(20-50)', 'Carry out & Take away', 'Restaurant(<20)']
 
@@ -220,6 +197,27 @@ Top-N Rekomendasi untuk User ID: 5:
 | 3  | 3         | -8.326672684688607e-17       |
 | 4  | 2         | -2.017589362129876e-16       |
 | 5  | 1         | -4.440892098500626e-16       |
+
+## Evaluation
+
+### Metrik Evaluasi:
+
+a. Evaluasi Content-Based Filtering:
+Untuk mengevaluasi kinerja model Content-Based Filtering, kami menggunakan Precision@5, yang mengukur seberapa akurat 5 rekomendasi teratas yang diberikan kepada pengguna. Metrik ini mengukur tingkat relevansi dari rekomendasi berdasarkan skor kemiripan antara profil pengguna dan kupon.
+Menggunakan cosine similarity antara user profile dan kupon.
+
+Top-N rekomendasi dihasilkan dengan memilih kupon yang paling mirip berdasarkan skor kemiripan.
+
+Hasil Precision@5 menunjukkan bahwa seluruh rekomendasi yang diberikan untuk pengguna pertama (user_index = 0) sangat relevan dengan preferensinya, yang menghasilkan nilai Precision@5 = 1.00.
+
+Dengan hasil ini, kita dapat menyimpulkan bahwa Content-Based Filtering memberikan rekomendasi yang sangat tepat bagi pengguna berdasarkan profil mereka.
+
+b. Evaluasi Collaborative Filtering:
+
+Matriks interaksi direduksi menggunakan TruncatedSVD, lalu dikalikan kembali untuk mendapatkan prediksi skor antar user dan kupon.
+Untuk model Collaborative Filtering, kami menggunakan Root Mean Square Error (RMSE) untuk mengukur seberapa akurat sistem dalam memprediksi interaksi antara pengguna dan kupon. RMSE adalah metrik yang mengukur perbedaan antara nilai yang diprediksi oleh model dengan nilai aktual yang terjadi, dan semakin rendah nilai RMSE, semakin baik prediksi model tersebut.
+
+Hasil RMSE untuk Collaborative Filtering adalah 0.0000, yang menunjukkan bahwa model sangat baik dalam merekonstruksi interaksi pengguna dengan kupon yang ditawarkan.
 
 Dengan hasil RMSE yang sangat rendah, ini menunjukkan bahwa Collaborative Filtering mampu memberikan prediksi yang sangat baik terkait preferensi pengguna berdasarkan interaksi mereka dengan kupon yang tersedia.
 
