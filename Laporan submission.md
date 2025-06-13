@@ -81,6 +81,8 @@ Berikut adalah deskripsi fitur yang digunakan dalam dataset:
 
 - toCoupon_GEQ5min: Waktu yang dibutuhkan pengguna untuk mendapatkan kupon, yang bisa menjadi faktor dalam keputusan pembelian.
 
+- toCoupon_GEQ15min: Menunjukkan apakah waktu perjalanan ke tempat kupon lebih dari 25 menit.
+
 - toCoupon_GEQ25min: Menunjukkan apakah waktu perjalanan ke tempat kupon lebih dari 25 menit.
 
 - direction_same: Menunjukkan arah perjalanan pengguna, yang dapat berhubungan dengan penawaran lokasi spesifik.
@@ -93,6 +95,10 @@ Berikut adalah deskripsi fitur yang digunakan dalam dataset:
 
 ## Data Preparation
 
+Pembuatan User Profile:
+
+Membuat profil pengguna berdasarkan informasi yang tersedia dalam dataset, seperti gender, age, maritalStatus, haschildren, dan occupation.
+
 TF-IDF untuk Content-Based Filtering
 Pada tahap ini, kami menggunakan TF-IDF (Term Frequency-Inverse Document Frequency) untuk ekstraksi fitur dari data kupon, yang digunakan dalam Content-Based Filtering. Teknik ini digunakan untuk menghitung relevansi kupon terhadap preferensi pengguna.
 
@@ -103,10 +109,6 @@ Tahapan persiapan data yang dilakukan meliputi langkah-langkah berikut:
 Pembuatan Kolom user_id:
 
 Kolom user_id dibuat dengan kode df['user_id'] = df.index, yang memetakan setiap pengguna ke ID yang unik. Langkah ini penting untuk Collaborative Filtering dan perlu dicantumkan dengan jelas di bagian Data Preparation, agar alur persiapan data lebih terstruktur.
-
-Pembuatan User Profile:
-
-Membuat profil pengguna berdasarkan informasi yang tersedia dalam dataset, seperti gender, age, maritalStatus, haschildren, dan occupation.
 
 Label Encoding:
 
@@ -144,11 +146,13 @@ Output untuk CBF menunjukkan kupon yang paling mirip berdasarkan profil pengguna
 
 Cosine Similarity dihitung menggunakan kode berikut:
 
+```
 tfidf = TfidfVectorizer()
 tfidf_matrix = tfidf.fit_transform(df['user_profile'])
 cos_sim = cosine_similarity(tfidf_matrix[user_index], tfidf_matrix)
 similar_indices = cos_sim.argsort()[0][-6:-1][::-1]
 df.iloc[similar_indices][['coupon', 'destination', 'Y']]
+```
 
 b. Collaborative Filtering (CF):
 
@@ -160,11 +164,13 @@ Evaluasi untuk Collaborative Filtering dilakukan dengan menghitung RMSE (Root Me
 
 SVD dilakukan dengan kode berikut:
 
+```
 svd = TruncatedSVD(n_components=5, random_state=42)
 latent_matrix = svd.fit_transform(interaction_array)
 predicted_matrix = np.dot(latent_matrix, svd.components_)
 rmse = mean_squared_error(true_values, predicted_values) ** 0.5
 print(f"RMSE Collaborative Filtering (TruncatedSVD): {rmse:.4f}")
+```
 
 ### Hasil Visualisasi:
 - Visualisasi hasil clustering menunjukkan adanya pengelompokan pengguna yang cukup jelas setelah reduksi PCA.
@@ -207,9 +213,11 @@ Output ini menunjukkan rekomendasi kupon untuk User 5 berdasarkan Collaborative 
 
 Sebuah heatmap digunakan untuk memvisualisasikan matriks interaksi antara pengguna dan kupon. Visualisasi ini memberikan gambaran mengenai bagaimana interaksi pengguna dengan kupon yang ditawarkan.
 
+```
 sns.heatmap(interaction_matrix, cmap="YlGnBu", cbar=True)
 plt.title("User-Coupon Interaction Matrix")
 plt.show()
+```
 
 ## Evaluation
 
