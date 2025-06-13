@@ -134,13 +134,11 @@ Matriks interaksi dibuat menggunakan user_id sebagai indeks dan coupon_id sebaga
 
 Pivot Table: df.pivot_table(index='user_id', columns='coupon_id', values='Y', fill_value=0)
 
-Diterapkan TruncatedSVD untuk dekomposisi dimensi rendah matriks interaksi.
-
 ## Modeling
 
 TruncatedSVD:
 
-TruncatedSVD digunakan untuk dekomposisi matriks dalam Collaborative Filtering berbasis faktorisasi matriks. Ini lebih cocok dijelaskan di bagian Modeling.
+TruncatedSVD digunakan untuk dekomposisi matriks dalam Collaborative Filtering berbasis faktorisasi matriks. TruncatedSVD juga digunakan untuk dekomposisi dimensi rendah matriks interaksi.
 
 a. Content-Based Filtering (CBF):
 
@@ -158,7 +156,7 @@ df.iloc[similar_indices][['coupon', 'destination', 'Y']]
 ```
 Output Top-N untuk CBF:
 User: Executive_30-39_high income
-Top-5 Kupon: ['Coffee House', 'Bar', 'Restaurant(<20)', 'Carry out & Take away', 'Restaurant(20-50)']
+Top-5 Kupon: ['Restaurant(<20)', 'Restaurant(<20)', 'Restaurant(<20)', 'Restaurant(<20)', 'Restaurant(<20)']
 
 | No | Coupon          | Destination     |
 | -- | --------------- | --------------- |
@@ -187,7 +185,7 @@ print(f"RMSE Collaborative Filtering (TruncatedSVD): {rmse:.4f}")
 ```
 Output Top-N untuk CF:
 User ID: 5
-Top-5 Kupon berdasarkan skor prediksi: ['Bar', 'Coffee House', 'Restaurant(20-50)', 'Carry out & Take away', 'Restaurant(<20)']
+Top-5 Kupon berdasarkan skor prediksi: ['4', '0', '3', '2', '1']
 
 Top-N Rekomendasi untuk User ID: 5:
 | No | Coupon ID | Predicted Score              |
